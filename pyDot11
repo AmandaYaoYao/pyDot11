@@ -167,41 +167,29 @@ def main(args):
         if not args.d:
             args.d = 'to'
         if args.t == 'wpa':
-            sniff(iface = args.i,
-                prn = packetParser,
-                lfilter = lambda x: x[Dot11].FCfield == 65L or x.haslayer(EAPOL),
-                store = 0)
+            LFilter = lambda x: x[Dot11].FCfield == 65L or x.haslayer(EAPOL)
         else:
-            sniff(iface = args.i,
-                            prn = packetParser,
-                            lfilter = lambda x: x[Dot11].FCfield == 65L,
-                            store = 0)
+            LFilter = lambda x: x[Dot11].FCfield == 65L
 
     ## Deal with 2-way
     elif args.d == 'both':
         if args.t == 'wpa':
-            sniff(iface = args.i,
-                prn = packetParser,
-                lfilter = lambda x: x[Dot11].FCfield == 65L or x[Dot11].FCfield == 66L or x.haslayer(EAPOL),
-                store = 0)
+            LFilter = lambda x: x[Dot11].FCfield == 65L or x[Dot11].FCfield == 66L or x.haslayer(EAPOL)
         else:
-            sniff(iface = args.i,
-                prn = packetParser,
-                lfilter = lambda x: x[Dot11].FCfield == 65L or x[Dot11].FCfield == 66L,
-                store = 0)
+            LFilter = lambda x: x[Dot11].FCfield == 65L or x[Dot11].FCfield == 66L
 
     ## Deal with From-DS
     elif args.d == 'from':
         if args.t == 'wpa':
-            sniff(iface = args.i,
-                prn = packetParser,
-                lfilter = lambda x: x[Dot11].FCfield == 66L or x.haslayer(EAPOL),
-                store = 0)
+            LFilter = lambda x: x[Dot11].FCfield == 66L or x.haslayer(EAPOL)
         else:
-            sniff(iface = args.i,
-                            prn = packetParser,
-                            lfilter = lambda x: x[Dot11].FCfield == 66L,
-                            store = 0)
+            LFilter = lambda x: x[Dot11].FCfield == 66L
+
+    ## Sniff
+    sniff(iface = args.i,
+          prn = packetParser,
+          lfilter = LFilter,
+          store = 0)
 
 
 if __name__ == '__main__':
