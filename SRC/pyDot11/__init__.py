@@ -64,11 +64,11 @@ def wpaEncrypt(encKey, origPkt, decodedPkt, PN, genFCS = True):
     dEverything = decodedPkt[LLC]
 
     ## Remove the FCS from the original packet
-    newPkt = RadioTap((p.byteRip(origPkt.copy(),
-                                 chop = True,
-                                 order = 'last',
-                                 output = 'str',
-                                 qty = 4)))
+    newPkt = RadioTap((pt.byteRip(origPkt.copy(),
+                                  chop = True,
+                                  order = 'last',
+                                  output = 'str',
+                                  qty = 4)))
     del newPkt[Dot11WEP]
 
     ## The data is ready for encryption

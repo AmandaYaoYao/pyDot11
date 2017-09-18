@@ -10,7 +10,7 @@ class Tkip(object):
     """All things TKIP related"""
 
     def __init__(self):
-        self.p = Packet()
+        self.pt = Packet()
 
         ## TKIP auxiliary definitions
         self.sbox_table = [
@@ -258,7 +258,7 @@ class Tkip(object):
 
         ## If the packet has FCS, it should be removed and added later on.
         if self.hasFCS(pkt):
-            pload = self.p.byteRip(pkt[Dot11WEP],
+            pload = self.pt.byteRip(pkt[Dot11WEP],
                                    order = 'last',
                                    qty = 4,
                                    chop = True,
@@ -298,12 +298,12 @@ class Tkip(object):
         """Return the decrypted packet"""
         
         ## This is our encrypted data we need to remove
-        eData = self.p.byteRip(tgtPkt[Dot11WEP].wepdata,
+        eData = self.pt.byteRip(tgtPkt[Dot11WEP].wepdata,
                                qty = 4,
                                chop = True)
 
         ## This is our decrypted everything, LLC included
-        dEverything = self.p.byteRip(decrypted,
+        dEverything = self.pt.byteRip(decrypted,
                                      qty = 16,
                                      order = 'last',
                                      chop = True)
@@ -313,7 +313,7 @@ class Tkip(object):
         del newPkt[Dot11WEP].wepdata
         
         ## Remove the last four bytes of new pkt and unhexlify
-        postPkt = RadioTap((self.p.byteRip(newPkt.copy(),
+        postPkt = RadioTap((self.pt.byteRip(newPkt.copy(),
                                            chop = True,
                                            order = 'last',
                                            output = 'str',

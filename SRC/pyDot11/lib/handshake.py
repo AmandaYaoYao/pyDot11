@@ -14,7 +14,7 @@ class Handshake(object):
     """Deal with any type of EAPOL traffic"""
 
     def __init__(self, psk = None, essid = None, pcap = False):
-        self.p = Packet()
+        self.pt = Packet()
         if psk is not None and essid is not None:
             if os.path.isfile('handshakes.sqlite'):
                 os.remove('handshakes.sqlite')
@@ -46,7 +46,7 @@ class Handshake(object):
 
     def eapolGrab(self, pkt):
         """Insert an EAPOL pkt into the DB for retrieval later"""
-        eNum = self.p.nonceDict.get(self.p.byteRip(pkt[Raw], qty = 3)[6:])
+        eNum = self.pt.nonceDict.get(self.pt.byteRip(pkt[Raw], qty = 3)[6:])
         if eNum[1] == '1' or eNum[1] == '2' or eNum[1] == '3':
             nonce = hexstr(str(pkt.load), onlyhex = 1)[39:134]
             hexPkt = hexstr(str(pkt), onlyhex = 1)
@@ -69,7 +69,7 @@ class Handshake(object):
                 if eNum == 'a2' or eNum == 't2':
                     vMAC = pkt[Dot11].addr2
                     bMAC = pkt[Dot11].addr1
-                    encType = self.p.byteRip(pkt[Raw], qty = 3)[3:]
+                    encType = self.pt.byteRip(pkt[Raw], qty = 3)[3:]
                     if encType == '01 0a':
                         encType = 'ccmp'
                     elif encType == '01 09':
