@@ -3,54 +3,72 @@
 import argparse, os, subprocess, sys
 from scapy.sendrecv import sniff
 from scapy.layers.inet import IP
-from scapy.sendrecv import sendp, sniff
 from scapy.layers.l2 import Ether, EAPOL
+from scapy.sendrecv import sendp, sniff
+from scapy.utils import PcapReader, PcapWriter
 from pyDot11 import *
 
-def fromDecrypt(packet, args, *cryptoList):
-    """Encompass steps for From-DS decrypt"""
-    if args.t == 'wep':
-        decodedPkt, iv = wepDecrypt(packet, args.p, False)
-    else:
-        tk = cryptoList[0].tgtInfo.get(cryptoList[3])[0]
-        encKey = cryptoList[0].tgtInfo.get(cryptoList[3])[1]
-        if cryptoList[0].encDict.get(cryptoList[3]) == 'ccmp':
-            origPkt, decodedPkt, PN = wpaDecrypt(encKey, packet, 'ccmp')
+"""
+To-Do:
+    - Split up fromDecrypt and toDecrypt for push to tap0 accordingly
+    - Create option for -f to output to tap0 when ready via enter key
+        - Currently outputs to a pcap
+        - -f should be optional once tap0 enter key option is invoked
+        - Add in FCS checks, etc..  More idealy done with modular imports
+"""
+class Handler(object):
+    """Handles aspects of dealing with Packets"""
+    def __init__(self):
+        self.pw = PcapWriter('decrypted.pcap', sync=True)
+
+    def fromDecrypt(self, packet, args, *cryptoList):
+        """Encompass steps for From-DS decrypt
+        Only pushes to tap0 if pkt.haslayer(IP)
+        """
+        if args.t == 'wep':
+            decodedPkt, iv = wepDecrypt(packet, args.p, False)
         else:
-            origPkt, decodedPkt, PN = wpaDecrypt(tk, packet, 'tkip')
+            tk = cryptoList[0].tgtInfo.get(cryptoList[3])[0]
+            encKey = cryptoList[0].tgtInfo.get(cryptoList[3])[1]
+            if cryptoList[0].encDict.get(cryptoList[3]) == 'ccmp':
+                origPkt, decodedPkt, PN = wpaDecrypt(encKey, packet, 'ccmp')
+            else:
+                origPkt, decodedPkt, PN = wpaDecrypt(tk, packet, 'tkip')
 
-    ### Debate on changing this so we push all?
-    if decodedPkt.haslayer(IP):
-        sendp(Ether(src = packet[Dot11].addr3,
-                    dst = packet[Dot11].addr1,
-                    type = 0x800)/decodedPkt[IP],
-        iface = 'tap{0}'.format(args.n),
-        verbose = 0)
+        if decodedPkt.haslayer(IP):
+            if args.i:
+                sendp(Ether(src = packet[Dot11].addr3,
+                            dst = packet[Dot11].addr1,
+                            type = 0x800)/decodedPkt[IP],
+                iface = 'tap{0}'.format(args.n),
+                verbose = 0)
+            else:
+                self.pw.write(decodedPkt)
 
 
-def toDecrypt(packet, args, *cryptoList):
-    """Encompass steps for To-DS decrypt"""
-    ## DEBUG
-    #if args.v:
-        #startDecrypt = time.time()
-
-    if args.t == 'wep':
-        decodedPkt, iv = wepDecrypt(packet, args.p, False)
-    else:
-        tk = cryptoList[0].tgtInfo.get(cryptoList[3])[0]
-        encKey = cryptoList[0].tgtInfo.get(cryptoList[3])[1]
-        if cryptoList[0].encDict.get(cryptoList[3]) == 'ccmp':
-            origPkt, decodedPkt, PN = wpaDecrypt(encKey, packet, 'ccmp')
+    def toDecrypt(self, packet, args, *cryptoList):
+        """Encompass steps for To-DS decrypt
+        Only pushes to tap0 if pkt.haslayer(IP)
+        """
+        if args.t == 'wep':
+            decodedPkt, iv = wepDecrypt(packet, args.p, False)
         else:
-            origPkt, decodedPkt, PN = wpaDecrypt(tk, packet, 'tkip')
+            tk = cryptoList[0].tgtInfo.get(cryptoList[3])[0]
+            encKey = cryptoList[0].tgtInfo.get(cryptoList[3])[1]
+            if cryptoList[0].encDict.get(cryptoList[3]) == 'ccmp':
+                origPkt, decodedPkt, PN = wpaDecrypt(encKey, packet, 'ccmp')
+            else:
+                origPkt, decodedPkt, PN = wpaDecrypt(tk, packet, 'tkip')
 
-    ### Debate on changing this so we push all?
-    if decodedPkt.haslayer(IP):
-        sendp(Ether(src = packet[Dot11].addr2,
-                    dst = packet[Dot11].addr3,
-                    type = 0x800)/decodedPkt[IP],
-        iface = 'tap{0}'.format(args.n),
-        verbose = 0)
+        if decodedPkt.haslayer(IP):
+            if args.i:
+                sendp(Ether(src = packet[Dot11].addr2,
+                            dst = packet[Dot11].addr3,
+                            type = 0x800)/decodedPkt[IP],
+                iface = 'tap{0}'.format(args.n),
+                verbose = 0)
+            else:
+                self.pw.write(decodedPkt)
         
 
 def pktFilter(packet):
@@ -63,7 +81,7 @@ def pktFilter(packet):
         return False
 
 
-def wepParser(args):
+def wepParser(pHandler, args):
     def engine(packet):
 
         ## Verify we care
@@ -71,25 +89,25 @@ def wepParser(args):
             
             ## Both ways From-DS
             if args.d == 'both' and packet[Dot11].addr2 == args.b.lower():
-                fromDecrypt(packet, args)
+                pHandler.fromDecrypt(packet, args)
                 
             ## Both ways To-DS
             elif args.d == 'both' and packet[Dot11].addr1 == args.b.lower():
-                toDecrypt(packet, args)
+                pHandler.toDecrypt(packet, args)
 
             # From-DS
             elif args.d == 'from' and packet[Dot11].addr2 == args.b.lower():
-                fromDecrypt(packet, args)
+                pHandler.fromDecrypt(packet, args)
 
             # To-DS
             elif args.d == 'to' and packet[Dot11].addr1 == args.b.lower():
-                toDecrypt(packet, args)
+                pHandler.toDecrypt(packet, args)
 
     return engine
 
 
 ### Need to verify chksums and src/dst for Ether()
-def wpaParser(args, shake, ccmp, tkip):
+def wpaParser(pHandler, args, shake, ccmp, tkip):
     def engine(packet):
         try:
             if packet.haslayer(EAPOL):
@@ -108,26 +126,23 @@ def wpaParser(args, shake, ccmp, tkip):
                 elif packet.addr2 in shake.availTgts:
                     tgtMAC = packet.addr2
 
-                ## DEBUG
-                #print 'My tgtMAC is: %s' % tgtMAC
-
                 if tgtMAC:
 
                     ## Both ways From-DS
                     if args.d == 'both' and packet[Dot11].addr2 == args.b.lower():
-                        fromDecrypt(packet, args, shake, ccmp, tkip, tgtMAC)
+                        pHandler.fromDecrypt(packet, args, shake, ccmp, tkip, tgtMAC)
                         
                     ## Both ways To-DS
                     elif args.d == 'both' and packet[Dot11].addr1 == args.b.lower():
-                        toDecrypt(packet, args, shake, ccmp, tkip, tgtMAC)
+                        pHandler.toDecrypt(packet, args, shake, ccmp, tkip, tgtMAC)
 
                     # From-DS
                     elif args.d == 'from' and packet[Dot11].addr2 == args.b.lower():
-                        fromDecrypt(packet, args, shake, ccmp, tkip, tgtMAC)
+                        pHandler.fromDecrypt(packet, args, shake, ccmp, tkip, tgtMAC)
 
                     # To-DS
                     elif args.d == 'to' and packet[Dot11].addr1 == args.b.lower():
-                        toDecrypt(packet, args, shake, ccmp, tkip, tgtMAC)
+                        pHandler.toDecrypt(packet, args, shake, ccmp, tkip, tgtMAC)
                 else:
                     pass
             else:
@@ -138,6 +153,7 @@ def wpaParser(args, shake, ccmp, tkip):
 
 
 def main(args):
+    pHandler = Handler()
 
     ## Setup the tap
     if not args.n:
@@ -150,7 +166,7 @@ def main(args):
 
     ## Setup the encryption
     if args.t == 'wep':
-        packetParser = wepParser(args)
+        packetParser = wepParser(pHandler, args)
     if args.t == 'wpa':
         if not args.e:
             print 'wpa requires -e'
@@ -158,10 +174,8 @@ def main(args):
         ccmp = Ccmp()
         tkip = Tkip()
         shake = Handshake(args.p, args.e)
-        packetParser = wpaParser(args, shake, ccmp, tkip)
+        packetParser = wpaParser(pHandler, args, shake, ccmp, tkip)
 
-    print 'pyDot11 up and running on tap{0}'.format(args.n)
-    
     ## Default direction of To-DS
     if not args.d or args.d == 'to':
         if not args.d:
@@ -185,16 +199,34 @@ def main(args):
         else:
             LFilter = lambda x: x[Dot11].FCfield == 66L
 
-    ## Sniff
-    sniff(iface = args.i,
-          prn = packetParser,
-          lfilter = LFilter,
-          store = 0)
-
+    ## Sniff or Read
+    if args.i:
+        print 'pyDot11 up and running on tap{0}'.format(args.n)
+        sniff(iface = args.i,
+              prn = packetParser,
+              lfilter = LFilter,
+              store = 0)
+    elif args.f:
+        print 'Iterating through {0}'.format(args.f)
+        if os.access(args.f, os.R_OK):
+            pCapture = PcapReader(args.f)
+            for pkt in pCapture:
+                packetParser(pkt)
+            pHandler.pw.close()
+        else:
+            sys.stderr.write("{}: Cannot open input file: {}; skipping\n".format(sys.argv[0], pcap_file))
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description = 'pyDot11 - Encrypt and Decrypt 802.11 on-the-fly')
 
+    input_args = parser.add_mutually_exclusive_group(required=True)
+    input_args.add_argument('-i',
+                            metavar = '<Sniffing NIC>',
+                            help = 'NIC to sniff with')
+    input_args.add_argument('-f',
+                            metavar = '<Input PCAP>',
+                            help = 'PCAP from which to get frames')
+    
     parser.add_argument('-b',
                         metavar = '<tgt BSSID>',
                         required = True,
@@ -206,10 +238,6 @@ if __name__ == '__main__':
     parser.add_argument('-e',
                         metavar = '<tgt ESSID>',
                         help = 'Target ESSID -------------- required for wpa')
-    parser.add_argument('-i',
-                        metavar = '<Sniffing NIC>',
-                        required = True,
-                        help = 'NIC to sniff with ----------------- required')
     parser.add_argument('-n',
                         metavar = '<dev number>',
                         help = 'Device number for Tap interface [Default: 0]')
