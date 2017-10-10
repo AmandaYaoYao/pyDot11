@@ -4,8 +4,8 @@
 * Decryption of WEP
 * Encryption of WEP
 * Decryption of WPA
-* Encryption of WPA
-    ** CCMP only for now
+* Encryption of WPA</br>
+   * CCMP only for now
 
 ### Prerequisites:
 There are some conflicts using scapy-2.3.3.  For now, until those issues are worked out, please use the 2.2.0 version.  Feel free to use the 2.2.0 version from our library, or one of your own choosing.
@@ -39,8 +39,9 @@ WPA Example: python pyDot11 -i wlan0mon -p <password> -b <tgt BSSID> -t wpa -e <
 WEP Example: python pyDot11 -f <your-pcap> -p <password> -b <tgt BSSID> -t wep
 WPA Example: python pyDot11 -f <your-pcap> -p <password> -b <tgt BSSID> -t wpa -e <tgt ESSID>
     ## OR ##
-from pyDot11 import *
-# Avail Modules:
+# Install RESOURCEs/pyDot11-1.1.2.tar.gz, then you can:
+   from pyDot11 import *
+# Avail Modules and where they came from:
     pcap = Pcap()
     pt = utils.Packet()
     wepCrypto = Wep()
