@@ -1,6 +1,6 @@
 #!/usr/bin/python2.7
 
-import argparse, os, subprocess, sys
+import argparse, os, subprocess, sys, time
 from scapy.sendrecv import sniff
 from scapy.layers.inet import IP
 from scapy.layers.l2 import Ether, EAPOL
@@ -11,15 +11,14 @@ from pyDot11 import *
 """
 To-Do:
     - Split up fromDecrypt and toDecrypt for push to tap0 accordingly
-    - Create option for -f to output to tap0 when ready via enter key
-        - Currently outputs to a pcap
-        - -f should be optional once tap0 enter key option is invoked
-        - Add in FCS checks, etc..  More idealy done with modular imports
+    - Perhaps add option to write output to a file
+    - Add in FCS checks, etc..  More idealy done with modular imports
 """
 class Handler(object):
     """Handles aspects of dealing with Packets"""
     def __init__(self):
-        self.pw = PcapWriter('decrypted.pcap', sync=True)
+        #self.pw = PcapWriter('decrypted.pcap', sync=True)
+        pass
 
     def fromDecrypt(self, packet, args, *cryptoList):
         """Encompass steps for From-DS decrypt
@@ -36,14 +35,14 @@ class Handler(object):
                 origPkt, decodedPkt, PN = wpaDecrypt(tk, packet, 'tkip')
 
         if decodedPkt.haslayer(IP):
-            if args.i:
-                sendp(Ether(src = packet[Dot11].addr3,
-                            dst = packet[Dot11].addr1,
-                            type = 0x800)/decodedPkt[IP],
-                iface = 'tap{0}'.format(args.n),
-                verbose = 0)
-            else:
-                self.pw.write(decodedPkt)
+            #if args.i:
+            sendp(Ether(src = packet[Dot11].addr3,
+                        dst = packet[Dot11].addr1,
+                        type = 0x800)/decodedPkt[IP],
+            iface = 'tap{0}'.format(args.n),
+            verbose = 0)
+            #else:
+                #self.pw.write(decodedPkt)
 
 
     def toDecrypt(self, packet, args, *cryptoList):
@@ -61,14 +60,14 @@ class Handler(object):
                 origPkt, decodedPkt, PN = wpaDecrypt(tk, packet, 'tkip')
 
         if decodedPkt.haslayer(IP):
-            if args.i:
-                sendp(Ether(src = packet[Dot11].addr2,
-                            dst = packet[Dot11].addr3,
-                            type = 0x800)/decodedPkt[IP],
-                iface = 'tap{0}'.format(args.n),
-                verbose = 0)
-            else:
-                self.pw.write(decodedPkt)
+            #if args.i:
+            sendp(Ether(src = packet[Dot11].addr2,
+                        dst = packet[Dot11].addr3,
+                        type = 0x800)/decodedPkt[IP],
+            iface = 'tap{0}'.format(args.n),
+            verbose = 0)
+            #else:
+                #self.pw.write(decodedPkt)
         
 
 def pktFilter(packet):
@@ -207,12 +206,15 @@ def main(args):
               lfilter = LFilter,
               store = 0)
     elif args.f:
-        print 'Iterating through {0}'.format(args.f)
+        print 'pyDot11 up and running on tap{0}'.format(args.n)
+        raw_input('Press Enter to Iterate through {0}'.format(args.f))
+        sTime = time.time()
         if os.access(args.f, os.R_OK):
             pCapture = PcapReader(args.f)
             for pkt in pCapture:
                 packetParser(pkt)
-            pHandler.pw.close()
+            #pHandler.pw.close()
+            print '\nCompleted in %s seconds!\n' % str(time.time() - sTime)
         else:
             sys.stderr.write("{}: Cannot open input file: {}; skipping\n".format(sys.argv[0], pcap_file))
 
