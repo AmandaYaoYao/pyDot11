@@ -1,11 +1,11 @@
 # pyDot11
 
 ## pyDot11 currently supports the following:
-* Decryption of WPA
-* Encryption of WPA
-    ** CCMP only for now
 * Decryption of WEP
 * Encryption of WEP
+* Decryption of WPA
+* Encryption of WPA</br>
+   * CCMP only for now
 
 ### Prerequisites:
 There are some conflicts using scapy-2.3.3.  For now, until those issues are worked out, please use the 2.2.0 version.  Feel free to use the 2.2.0 version from our library, or one of your own choosing.
@@ -36,9 +36,17 @@ python pyDot11 --help
 WEP Example: python pyDot11 -i wlan0mon -p <password> -b <tgt BSSID> -t wep
 WPA Example: python pyDot11 -i wlan0mon -p <password> -b <tgt BSSID> -t wpa -e <tgt ESSID>
     ## OR ##
-pypy pyDot11 --help
-WEP Example: pypy pyDot11 -i wlan0mon -p <password> -b <tgt BSSID> -t wep -o pypy
-WPA Example: pypy pyDot11 -i wlan0mon -p <password> -b <tgt BSSID> -t wpa -e <tgt ESSID> -o pypy
+WEP Example: python pyDot11 -f <your-pcap> -p <password> -b <tgt BSSID> -t wep
+WPA Example: python pyDot11 -f <your-pcap> -p <password> -b <tgt BSSID> -t wpa -e <tgt ESSID>
+    ## OR ##
+# Install RESOURCEs/pyDot11-1.1.2.tar.gz, then you can:
+   from pyDot11 import *
+# Avail Modules and where they came from:
+    pcap = Pcap()
+    pt = utils.Packet()
+    wepCrypto = Wep()
+    ccmpCrypto = Ccmp()
+    tkipCrypto = Tkip()
 ````
 ### Need help grabbing an EAPOL?
 ````bash

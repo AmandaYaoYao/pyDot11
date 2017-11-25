@@ -45,8 +45,28 @@ class Handshake(object):
 
 
     def eapolGrab(self, pkt):
-        """Insert an EAPOL pkt into the DB for retrieval later"""
-        eNum = self.pt.nonceDict.get(self.pt.byteRip(pkt[Raw], qty = 3)[6:])
+        """Insert an EAPOL pkt into the DB for retrieval later
+        
+        A bug was found at BSides Charleston, thus the try statement.
+        As no logs exist on this level, we are now hunting this bug.
+        If you receive the warning, please pass along to ICSec.  Thanks!
+        """
+        try:
+            eNum = self.pt.nonceDict.get(self.pt.byteRip(pkt[Raw], qty = 3)[6:])
+
+        ## Deal with bug if seen again
+        ##File "/usr/local/lib/python2.7/dist-packages/pyDot11/lib/handshake.py", line 49, in eapolGrab
+            ##eNum = self.pt.nonceDict.get(self.pt.byteRip(pkt[Raw], qty = 3)[6:])
+        ##File "/usr/lib/python2.7/dist-packages/scapy/packet.py", line 817, in __getitem__
+            ##raise IndexError("Layer [%s] not found" % lname)
+        ##IndexError: Layer [Raw] not found
+        except:
+            wrpcap('IndexError.pcap', pkt)
+            print '\n***** Unknown encryption type              *****'
+            print '***** Contact ICSec on github for assistance *****'
+            print '***** Bad frame saved to IndexError.pcap     *****'
+            return
+            
         if eNum[1] == '1' or eNum[1] == '2' or eNum[1] == '3':
             nonce = hexstr(str(pkt.load), onlyhex = 1)[39:134]
             hexPkt = hexstr(str(pkt), onlyhex = 1)
@@ -75,10 +95,11 @@ class Handshake(object):
                     elif encType == '01 09':
                         encType = 'tkip'
                     else:
-                        encType = None
-                        print '***** Unknown encryption type                *****'
+                        wrpcap('encType.pcap', pkt)
+                        print '\n***** Unknown encryption type                *****'
                         print '***** Contact ICSec on github for assistance *****'
-                        sys.exit(1)
+                        print '***** Bad frame saved to encType.pcap        *****'
+                        return
                     self.encDict.update({vMAC: encType})
                     self.eapolStore(hexPkt, vMAC, bMAC, nonce, eNum)
 
