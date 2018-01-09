@@ -4,15 +4,16 @@ from scapy.layers.l2 import LLC
 from scapy.layers.inet import IP
 from scapy.packet import Raw, Padding
 from scapy.utils import hexstr
-from utils import Packet
+#from utils import Packet
 from zlib import crc32
 import binascii, re, struct, sys
+import scapyEssentials as SE
 
 class Ccmp(object):
     """All things CCMP related"""
 
     def __init__(self):
-        self.pt = Packet()
+        self.pt = SE.pt
 
     def toDS(self, pkt):
         return pkt[Dot11].FCfield & 0x1 > 0

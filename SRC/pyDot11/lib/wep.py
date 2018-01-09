@@ -1,17 +1,17 @@
-import binascii
 from rc4 import rc4
 from scapy.layers.dot11 import Dot11, Dot11WEP, RadioTap
 from scapy.layers.l2 import LLC
 from scapy.packet import Padding
 from scapy.utils import hexstr
-from utils import Packet
 from zlib import crc32
+import binascii
+import scapyEssentials as SE
 
 class Wep(object):
     """All things WEP related"""
     
     def __init__(self):
-        self.pt = Packet()
+        self.pt = SE.pt
 
 
     def seedGen(self, iv, keyText):

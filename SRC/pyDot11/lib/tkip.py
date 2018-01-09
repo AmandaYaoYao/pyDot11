@@ -2,15 +2,15 @@ from array import array
 from rc4 import rc4
 from scapy.layers.dot11 import RadioTap, Dot11, Dot11WEP
 from scapy.layers.l2 import LLC
-from utils import Packet
 from zlib import crc32
 import binascii, re, struct, sys
+import scapyEssentials as SE
 
 class Tkip(object):
     """All things TKIP related"""
 
     def __init__(self):
-        self.pt = Packet()
+        self.pt = SE.pt
 
         ## TKIP auxiliary definitions
         self.sbox_table = [
