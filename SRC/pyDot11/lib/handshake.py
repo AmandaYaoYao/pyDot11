@@ -6,15 +6,16 @@ from pbkdf2 import PBKDF2
 from scapy.layers.dot11 import Dot11
 from scapy.packet import Raw
 from scapy.utils import hexstr, PcapWriter
-from utils import Packet
+#from utils import Packet
 import binascii, hashlib, hmac, logging, os, re, sha, sys
 import sqlite3 as lite
+import wifiEssentials as WE
 
 class Handshake(object):
     """Deal with any type of EAPOL traffic"""
 
     def __init__(self, psk = None, essid = None, pcap = False):
-        self.pt = Packet()
+        self.pt = WE.pt
         if psk is not None and essid is not None:
             if os.path.isfile('handshakes.sqlite'):
                 os.remove('handshakes.sqlite')

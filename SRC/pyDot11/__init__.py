@@ -13,6 +13,7 @@ from .lib.utils import Pcap
 from .lib import utils
 from .lib.wep import Wep
 import binascii
+import wifiEssentials as WE
 
 ## WEP PORTION
 def wepDecrypt(pkt, keyText, genFCS = True):
@@ -85,7 +86,7 @@ def wpaEncrypt(encKey, origPkt, decodedPkt, PN, genFCS = True):
 
 ### Instantiations
 pcap = Pcap()
-pt = utils.Packet()
+pt = WE.pt
 wepCrypto = Wep()
 ccmpCrypto = Ccmp()
 tkipCrypto = Tkip()
