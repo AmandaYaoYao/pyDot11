@@ -7,13 +7,13 @@ from scapy.utils import hexstr
 #from utils import Packet
 from zlib import crc32
 import binascii, re, struct, sys
-import scapyEssentials as SE
+import wifiEssentials as WE
 
 class Ccmp(object):
     """All things CCMP related"""
 
     def __init__(self):
-        self.pt = SE.pt
+        self.pt = WE.pt
 
     def toDS(self, pkt):
         return pkt[Dot11].FCfield & 0x1 > 0

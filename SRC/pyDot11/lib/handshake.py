@@ -9,13 +9,13 @@ from scapy.utils import hexstr, PcapWriter
 #from utils import Packet
 import binascii, hashlib, hmac, logging, os, re, sha, sys
 import sqlite3 as lite
-import scapyEssentials as SE
+import wifiEssentials as WE
 
 class Handshake(object):
     """Deal with any type of EAPOL traffic"""
 
     def __init__(self, psk = None, essid = None, pcap = False):
-        self.pt = SE.pt
+        self.pt = WE.pt
         if psk is not None and essid is not None:
             if os.path.isfile('handshakes.sqlite'):
                 os.remove('handshakes.sqlite')

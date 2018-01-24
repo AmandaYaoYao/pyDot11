@@ -4,13 +4,13 @@ from scapy.layers.dot11 import RadioTap, Dot11, Dot11WEP
 from scapy.layers.l2 import LLC
 from zlib import crc32
 import binascii, re, struct, sys
-import scapyEssentials as SE
+import wifiEssentials as WE
 
 class Tkip(object):
     """All things TKIP related"""
 
     def __init__(self):
-        self.pt = SE.pt
+        self.pt = WE.pt
 
         ## TKIP auxiliary definitions
         self.sbox_table = [

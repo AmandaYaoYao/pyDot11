@@ -5,13 +5,13 @@ from scapy.packet import Padding
 from scapy.utils import hexstr
 from zlib import crc32
 import binascii
-import scapyEssentials as SE
+import wifiEssentials as WE
 
 class Wep(object):
     """All things WEP related"""
     
     def __init__(self):
-        self.pt = SE.pt
+        self.pt = WE.pt
 
 
     def seedGen(self, iv, keyText):
