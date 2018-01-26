@@ -51,7 +51,7 @@ def wpaDecrypt(encKey, origPkt, eType, genFCS = True):
         stream = tkipCrypto.decoder(origPkt, encKey)
         decodedPkt = tkipCrypto.deBuilder(origPkt, stream)
         PN = None
-    return origPkt, decodedPkt, PN
+    return decodedPkt, PN
 
 def wpaEncrypt(encKey, origPkt, decodedPkt, PN, genFCS = True):
     """Encompasses the steps needed to encrypt a WPA packet
