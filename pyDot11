@@ -3,7 +3,7 @@
 import argparse, os, subprocess, sys, time
 from scapy.sendrecv import sniff
 from scapy.layers.inet import IP
-from scapy.layers.l2 import Ether, EAPOL
+from scapy.layers.eap import Ether, EAPOL
 from scapy.sendrecv import sendp, sniff
 from scapy.utils import PcapReader, PcapWriter
 from pyDot11 import *
@@ -55,9 +55,9 @@ class Handler(object):
             tk = cryptoList[0].tgtInfo.get(cryptoList[3])[0]
             encKey = cryptoList[0].tgtInfo.get(cryptoList[3])[1]
             if cryptoList[0].encDict.get(cryptoList[3]) == 'ccmp':
-                origPkt, decodedPkt, PN = wpaDecrypt(encKey, packet, 'ccmp')
+                decodedPkt, PN = wpaDecrypt(encKey, packet, 'ccmp')
             else:
-                origPkt, decodedPkt, PN = wpaDecrypt(tk, packet, 'tkip')
+                decodedPkt, PN = wpaDecrypt(tk, packet, 'tkip')
 
         if decodedPkt.haslayer(IP):
             #if args.i:

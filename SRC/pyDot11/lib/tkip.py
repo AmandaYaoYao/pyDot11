@@ -299,26 +299,25 @@ class Tkip(object):
         
         ## This is our encrypted data we need to remove
         eData = self.pt.byteRip(tgtPkt[Dot11WEP].wepdata,
-                               qty = 4,
-                               chop = True)
+                                qty = 4,
+                                chop = True)
 
         ## This is our decrypted everything, LLC included
         dEverything = self.pt.byteRip(decrypted,
-                                     qty = 16,
-                                     order = 'last',
-                                     chop = True)
+                                      qty = 16,
+                                      order = 'last',
+                                      chop = True)
 
         ## Prep the new pkt
         newPkt = tgtPkt.copy()
         del newPkt[Dot11WEP].wepdata
-        
+
         ## Remove the last four bytes of new pkt and unhexlify
         postPkt = RadioTap((self.pt.byteRip(newPkt.copy(),
-                                           chop = True,
-                                           order = 'last',
-                                           output = 'str',
-                                           qty = 4)))
-        del postPkt[Dot11WEP]
+                                            chop = True,
+                                            order = 'last',
+                                            output = 'str',
+                                            qty = 4)))
 
         ## The data is proper in here
         finalPkt = postPkt.copy()/LLC(binascii.unhexlify(dEverything.replace(' ', '')))
