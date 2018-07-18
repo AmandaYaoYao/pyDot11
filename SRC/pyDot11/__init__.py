@@ -13,7 +13,7 @@ from .lib.utils import Pcap
 from .lib import utils
 from .lib.wep import Wep
 import binascii
-import wifiEssentials as WE
+import packetEssentials as PE
 
 ## WEP PORTION
 def wepDecrypt(pkt, keyText, genFCS = True):
@@ -51,7 +51,7 @@ def wpaDecrypt(encKey, origPkt, eType, genFCS = True):
         stream = tkipCrypto.decoder(origPkt, encKey)
         decodedPkt = tkipCrypto.deBuilder(origPkt, stream)
         PN = None
-    return origPkt, decodedPkt, PN
+    return decodedPkt, PN
 
 def wpaEncrypt(encKey, origPkt, decodedPkt, PN, genFCS = True):
     """Encompasses the steps needed to encrypt a WPA packet
@@ -86,7 +86,7 @@ def wpaEncrypt(encKey, origPkt, decodedPkt, PN, genFCS = True):
 
 ### Instantiations
 pcap = Pcap()
-pt = WE.pt
+pt = PE.pt
 wepCrypto = Wep()
 ccmpCrypto = Ccmp()
 tkipCrypto = Tkip()

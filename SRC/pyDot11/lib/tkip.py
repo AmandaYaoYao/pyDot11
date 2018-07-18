@@ -4,13 +4,13 @@ from scapy.layers.dot11 import RadioTap, Dot11, Dot11WEP
 from scapy.layers.l2 import LLC
 from zlib import crc32
 import binascii, re, struct, sys
-import wifiEssentials as WE
+import packetEssentials as PE
 
 class Tkip(object):
     """All things TKIP related"""
 
     def __init__(self):
-        self.pt = WE.pt
+        self.pt = PE.pt
 
         ## TKIP auxiliary definitions
         self.sbox_table = [
@@ -299,26 +299,25 @@ class Tkip(object):
         
         ## This is our encrypted data we need to remove
         eData = self.pt.byteRip(tgtPkt[Dot11WEP].wepdata,
-                               qty = 4,
-                               chop = True)
+                                qty = 4,
+                                chop = True)
 
         ## This is our decrypted everything, LLC included
         dEverything = self.pt.byteRip(decrypted,
-                                     qty = 16,
-                                     order = 'last',
-                                     chop = True)
+                                      qty = 16,
+                                      order = 'last',
+                                      chop = True)
 
         ## Prep the new pkt
         newPkt = tgtPkt.copy()
         del newPkt[Dot11WEP].wepdata
-        
+
         ## Remove the last four bytes of new pkt and unhexlify
         postPkt = RadioTap((self.pt.byteRip(newPkt.copy(),
-                                           chop = True,
-                                           order = 'last',
-                                           output = 'str',
-                                           qty = 4)))
-        del postPkt[Dot11WEP]
+                                            chop = True,
+                                            order = 'last',
+                                            output = 'str',
+                                            qty = 4)))
 
         ## The data is proper in here
         finalPkt = postPkt.copy()/LLC(binascii.unhexlify(dEverything.replace(' ', '')))
