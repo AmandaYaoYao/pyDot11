@@ -199,7 +199,7 @@ class Handshake(object):
                             print 'EAPOL COMPLETE: %s\n' % vMAC
                             self.alert.add(vMAC)
         except:
-            print ('eNum is NULL\n')
+            print 'eNum for EAPOL is NULL\n'
                     
 
     def eapolStore(self, hexPkt, vMAC, bMAC, nonce, eNum):
