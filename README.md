@@ -24,7 +24,7 @@ In the RESOURCEs folder you will find the python modules which have been tested.
 ````bash
 pip install RESOURCEs/packetEssentials-1.0.8.tar.gz
 pip install RESOURCEs/pbkdf2-1.3.tar.gz
-pip install RESOURCEs/pyDot11-2.0.1.tar.gz
+pip install RESOURCEs/pyDot11-2.0.7.tar.gz
 pip install RESOURCEs/pycryptodomex-3.4.5.tar.gz
 pip install RESOURCEs/rc4-0.1.tar.gz
 pip install RESOURCEs/scapy-2.4.0.tar.gz
@@ -64,7 +64,7 @@ python scripts/airpunt --help
 ### Various examples of other things you can do with pyDot11:
 <strong>We can <a href="https://github.com/ICSec/airpwn-ng">airpwn-ng!</href></strong>
 ````python
-## Example of grabbing an encrypted packet, decrypting it, and then replaying it:
+## Example of grabbing an encrypted ICMP echo-request, decrypting it, and then replaying it:
 from pyDot11 import *
 from scapy.utils import rdpcap
 encPkts = rdpcap('PCAPs/ICMPs/wep_pings.pcap')
@@ -75,7 +75,10 @@ encPkt = wepEncrypt(decPkt, '0123456789', iVal)
 encPkt.summary()
 encPkt
 encPkts[1]
-encPkt == encPkts[1]
+
+## At one point during development, I thought it created an exact copy.
+## Will chew on and debug this later.
+#encPkt == encPkts[1]
 ````
 
 ````python
