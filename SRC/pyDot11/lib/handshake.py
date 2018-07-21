@@ -5,8 +5,7 @@ from nic import Tap
 from pbkdf2 import PBKDF2
 from scapy.layers.dot11 import Dot11
 from scapy.packet import Raw
-from scapy.utils import hexstr, PcapWriter
-#from utils import Packet
+from scapy.utils import hexstr, PcapWriter, wrpcap
 import binascii, hashlib, hmac, logging, os, re, sha, sys
 import sqlite3 as lite
 import packetEssentials as PE
