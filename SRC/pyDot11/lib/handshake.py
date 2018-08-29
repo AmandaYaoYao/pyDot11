@@ -30,11 +30,11 @@ class Handshake(object):
             self.pmk = PBKDF2(psk, essid, 4096).read(32)
             self.db.execute('CREATE TABLE IF NOT EXISTS\
                                 "shakes"("pkt" TEXT,\
-                                        "vmac" TEXT,\
-                                        "bmac" TEXT,\
-                                        "nonce" TEXT,\
-                                        "e_num" TEXT,\
-                                        UNIQUE(vmac, bmac, e_num));')
+                                         "vmac" TEXT,\
+                                         "bmac" TEXT,\
+                                         "nonce" TEXT,\
+                                         "e_num" TEXT,\
+                                         UNIQUE(vmac, bmac, e_num));')
             self.con.commit()
             if pcap is True:
                 self.eapolTrack = PcapWriter('eapols.pcap', sync = True)
