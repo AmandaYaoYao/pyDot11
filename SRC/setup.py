@@ -5,7 +5,7 @@ from setuptools import setup
 
 setup(
     name = 'pyDot11',
-    version = '2.0.8',
+    version = '2.1.0',
     author = 'stryngs',
     author_email = 'info@ethicalreporting.org',
     packages = ['pyDot11', 'pyDot11.lib'],
