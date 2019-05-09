@@ -151,12 +151,12 @@ class Ccmp(object):
         counter = bytearray(16)
         counter[0] = 0x59
         counter[1] = 0
-        
+
         self.bcopy(bytearray(re.sub(':','', dot11.addr2).decode("hex")), counter, 0, 2)
         self.bcopy(PN, counter, 0, 8)
         counter[14] = (total_sz >> 8) & 0xff
         counter[15] = total_sz & 0xff
-        
+
         ## DEBUG
         #print "".join("{:02x} ".format(e) for e in counter)
 
@@ -173,17 +173,17 @@ class Ccmp(object):
 
         crypted_block = aesKey.encrypt(str(counter))
         nice_MIC = bytearray(pload[total_sz+8:])
-        
+
         ## DEBUG
         #print("%d %d %d" % (total_sz, offset, blocks))
-        
+
         self.xorRange(bytearray(crypted_block), nice_MIC, nice_MIC, 8)
 
         ## Decrypt packet with CCMP
         stream = ''
-        
+
         last = total_sz % 16
-        
+
         for i in range(1, blocks + 1):
             if last > 0 and i == blocks:
                 block_sz = last
@@ -223,7 +223,7 @@ class Ccmp(object):
         ## Remove RadioTap() info if required
         if genFCS is False:
             postPkt = RadioTap()/postPkt[RadioTap].payload
-        
+
         ## Rip off the Dot11WEP layer
         del postPkt[Dot11WEP]
 
@@ -231,10 +231,15 @@ class Ccmp(object):
         decodedPkt = postPkt/LLC(str(stream))
 
         ## Flip FCField bits accordingly
-        if decodedPkt[Dot11].FCfield == 65L:
-            decodedPkt[Dot11].FCfield = 1L
-        elif decodedPkt[Dot11].FCfield == 66L:
-            decodedPkt[Dot11].FCfield = 2L
+        ### DEBUG
+        # if decodedPkt[Dot11].FCfield == 65L:
+        #     decodedPkt[Dot11].FCfield = 1L
+        # elif decodedPkt[Dot11].FCfield == 66L:
+        #     decodedPkt[Dot11].FCfield = 2L
+        if decodedPkt[Dot11].FCfield == 65:
+            decodedPkt[Dot11].FCfield = 1
+        elif decodedPkt[Dot11].FCfield == 66:
+            decodedPkt[Dot11].FCfield = 2
 
         ## Return the decoded packet with or without FCS
         if genFCS is False:
@@ -248,7 +253,7 @@ class Ccmp(object):
         Given the packet as pkt
         The temporal key contained within AES as aesKey
         The PN as PN
-        
+
         This function expects a packet not to have FCS
         If one wanted to implement this function being able to deal with FCS
         pload = self.pt.byteRip(pkt[LLC],
@@ -257,7 +262,7 @@ class Ccmp(object):
                                 chop = True,
                                 output = 'str')
         """
-        
+
         ## Obtain the LLC in str format
         pload = str(pkt[LLC])
 
@@ -285,18 +290,18 @@ class Ccmp(object):
 
         if self.fromDS(pkt) and self.toDS(pkt):
             self.bcopy(bytearray(re.sub(':','', dot11.addr4).decode("hex")), AAD, 0, 24)
-        
+
         ### This can be done ahead of time or not objectified
         crypted_block = [0]*16
         offset = 8
-        
+
         blocks = (total_sz + 15) / 16
-        
+
         ### This can be done ahead of time or not objectified
         counter = bytearray(16)
         counter[0] = 0x59
         counter[1] = 0
-        
+
         self.bcopy(bytearray(re.sub(':','', dot11.addr2).decode("hex")), counter, 0, 2)
         self.bcopy(PN, counter, 0, 8)
         counter[14] = (total_sz >> 8) & 0xff
@@ -306,7 +311,7 @@ class Ccmp(object):
         MIC = bytearray(aesKey.encrypt(str(MIC)))
         self.xorRange(MIC, AAD[16:], MIC, 16)
         MIC = bytearray(aesKey.encrypt(str(MIC)))
-        
+
         ### Can we do this ahead of time?
         counter[0] &= 0x07
         counter[14] = 0
@@ -340,7 +345,7 @@ class Ccmp(object):
         pload1 = bytearray(pload[offset:])
         self.xorRange(pload1, MIC, pload1, 8)
         encrypted = ccmphdr + encrypted + pload1
-        
+
         del pkt[LLC]
         finalPkt = pkt/Raw(encrypted)
 

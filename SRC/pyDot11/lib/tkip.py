@@ -228,7 +228,7 @@ class Tkip(object):
         rc4_key[13] = self.upperByte(ppk[4])
         rc4_key[14] = self.lowerByte(ppk[5])
         rc4_key[15] = self.upperByte(ppk[5])
-        
+
         ## DEBUG
         #for i in range(0,16):
             #print hex(rc4_key[i])
@@ -283,7 +283,7 @@ class Tkip(object):
         ## Check if decrypted CRC is correct. If it's not, ignore the packet.
         dlen = len(stream)
         crc = crc32(str(stream[:-12]))
-        
+
         ### This is an issue, work it out later
         #if (stream[dlen - 12] != (crc & 0xff) or
             #stream[dlen - 11] != ((crc >> 8) & 0xff) or
@@ -293,10 +293,10 @@ class Tkip(object):
 
         return stream
 
-   
+
     def deBuilder(self, tgtPkt, decrypted):
         """Return the decrypted packet"""
-        
+
         ## This is our encrypted data we need to remove
         eData = self.pt.byteRip(tgtPkt[Dot11WEP].wepdata,
                                 qty = 4,
@@ -321,18 +321,23 @@ class Tkip(object):
 
         ## The data is proper in here
         finalPkt = postPkt.copy()/LLC(binascii.unhexlify(dEverything.replace(' ', '')))
-       
+
         ## Flip FCField bits accordingly
-        if finalPkt[Dot11].FCfield == 65L:
-            finalPkt[Dot11].FCfield = 1L
-        elif finalPkt[Dot11].FCfield == 66L:
-            finalPkt[Dot11].FCfield = 2L
+        ### DEBUG
+        # if finalPkt[Dot11].FCfield == 65L:
+        #     finalPkt[Dot11].FCfield = 1L
+        # elif finalPkt[Dot11].FCfield == 66L:
+        #     finalPkt[Dot11].FCfield = 2L
+        if finalPkt[Dot11].FCfield == 65:
+            finalPkt[Dot11].FCfield = 1
+        elif finalPkt[Dot11].FCfield == 66:
+            finalPkt[Dot11].FCfield = 2
 
         ## Calculate and append the FCS
         crcle = crc32(str(finalPkt[Dot11])) & 0xffffffff
 
         if sys.byteorder == "little":
-            
+
             ## Convert to big endian
             crc = struct.pack('<L', crcle)
             ## Convert to long

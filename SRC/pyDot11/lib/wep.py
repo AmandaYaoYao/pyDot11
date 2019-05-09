@@ -9,7 +9,7 @@ import packetEssentials as PE
 
 class Wep(object):
     """All things WEP related"""
-    
+
     def __init__(self):
         self.pt = PE.pt
 
@@ -17,13 +17,13 @@ class Wep(object):
     def seedGen(self, iv, keyText):
         """Currently works with 40-bit and 104-bit"""
         keyLen = len(keyText)
-        
+
         ## 40-bit
         if keyLen == 5:
             key = binascii.unhexlify(hexstr(keyText, onlyhex = 1).replace(' ', ''))
         elif keyLen == 10:
             key = binascii.unhexlify(keyText)
-        
+
         ## 104-bit
         elif keyLen == 13:
             key = binascii.unhexlify(hexstr(keyText, onlyhex = 1).replace(' ', ''))
@@ -31,8 +31,8 @@ class Wep(object):
             key = binascii.unhexlify(keyText)
 
         return iv + key
-    
-    
+
+
     def deBuilder(self, packet, stream, genFCS):
         """Take the pkt object and apply stream to [LLC]"""
 
@@ -42,7 +42,7 @@ class Wep(object):
                                            order = 'last',
                                            output = 'str',
                                            qty = 4))
-        
+
         ## Remove RadioTap() info if required
         if genFCS is False:
             postPkt = RadioTap()/postPkt[RadioTap].payload
@@ -52,12 +52,17 @@ class Wep(object):
 
         ## Add the stream to LLC
         decodedPkt = postPkt/LLC(str(stream))
-        
+
         ## Flip FCField bits accordingly
-        if decodedPkt[Dot11].FCfield == 65L:
-            decodedPkt[Dot11].FCfield = 1L
-        elif decodedPkt[Dot11].FCfield == 66L:
-            decodedPkt[Dot11].FCfield = 2L
+        ### DEBUG
+        # if decodedPkt[Dot11].FCfield == 65L:
+        #     decodedPkt[Dot11].FCfield = 1L
+        # elif decodedPkt[Dot11].FCfield == 66L:
+        #     decodedPkt[Dot11].FCfield = 2L
+        if decodedPkt[Dot11].FCfield == 65:
+            decodedPkt[Dot11].FCfield = 1
+        elif decodedPkt[Dot11].FCfield == 66:
+            decodedPkt[Dot11].FCfield = 2
 
         ## Return the decoded packet with or without FCS
         if genFCS is False:
@@ -71,14 +76,14 @@ class Wep(object):
         ## Re-use the IV for comparative purposes
         iVal = pkt[Dot11WEP].iv
         seed = self.seedGen(iVal, keyText)
-        
+
         ## Remove the FCS so that we maintain packet size
         pload = self.pt.byteRip(pkt[Dot11WEP],
                                 order = 'last',
                                 qty = 4,
                                 chop = True,
                                 output = 'str')
-        
+
         ## Return the stream, iv and seed
         return rc4(Dot11WEP(pload).wepdata, seed), iVal, seed
 
@@ -86,10 +91,10 @@ class Wep(object):
     def encoder(self, pkt, iVal, keyText):
         ## Calculate the WEP Integrity Check Value (ICV)
         wepICV = self.pt.endSwap(hex(crc32(str(pkt[LLC])) & 0xffffffff))
-        
+
         ## Concatenate ICV to the [LLC]
         stream = str(pkt[LLC]) + binascii.unhexlify(wepICV.replace('0x', ''))
-        
+
         ## Return the encrypted data
         return rc4(stream, self.seedGen(iVal, keyText))
 
@@ -103,10 +108,15 @@ class Wep(object):
         encodedPacket = pkt/Dot11WEP(iv = iVal, keyid = 0, wepdata = stream)
 
         ## Flip FCField bits accordingly
-        if encodedPacket[Dot11].FCfield == 1L:
-            encodedPacket[Dot11].FCfield = 65L
-        elif encodedPacket[Dot11].FCfield == 2L:
-            encodedPacket[Dot11].FCfield = 66L
+        ### DEBUG
+        # if encodedPacket[Dot11].FCfield == 1L:
+        #     encodedPacket[Dot11].FCfield = 65L
+        # elif encodedPacket[Dot11].FCfield == 2L:
+        #     encodedPacket[Dot11].FCfield = 66L
+        if encodedPacket[Dot11].FCfield == 1:
+            encodedPacket[Dot11].FCfield = 65
+        elif encodedPacket[Dot11].FCfield == 2:
+            encodedPacket[Dot11].FCfield = 66
 
         ## Add the ICV
         #encodedPacket[Dot11WEP].icv = int(self.pt.endSwap(hex(crc32(str(encodedPacket[Dot11])[0:-4]) & 0xffffffff)), 16)

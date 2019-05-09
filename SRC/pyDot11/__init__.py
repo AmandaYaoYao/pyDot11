@@ -18,12 +18,13 @@ import packetEssentials as PE
 ## WEP PORTION
 def wepDecrypt(pkt, keyText, genFCS = True):
     """Encompasses the steps needed to decrypt a WEP packet
-    By default will generate a packet with an FCS"""
+    By default will generate a packet with an FCS
+    """
     stream, iVal, seed = wepCrypto.decoder(pkt, keyText)
-    
+
     ## Return the decrypted packet and iv
     return wepCrypto.deBuilder(pkt, stream, genFCS), iVal
-     
+
 
 def wepEncrypt(pkt, keyText, iVal = '\xba0\x0e'):
     """Encompasses the steps needed to encrypt a WEP packet
@@ -35,7 +36,7 @@ def wepEncrypt(pkt, keyText, iVal = '\xba0\x0e'):
 
     ## Return the encrypted packet
     return wepCrypto.enBuilder(pkt, stream, iVal)
-    
+
 
 def wpaDecrypt(encKey, origPkt, eType, genFCS = True):
     """Encompasses the steps needed to decrypt a WPA packet
@@ -45,7 +46,7 @@ def wpaDecrypt(encKey, origPkt, eType, genFCS = True):
     if eType == 'ccmp':
         stream, PN = ccmpCrypto.decoder(origPkt, encKey)
         decodedPkt = ccmpCrypto.deBuilder(origPkt, stream, genFCS)
-        
+
     ### Need to pregen tkip key
     else:
         stream = tkipCrypto.decoder(origPkt, encKey)
@@ -60,7 +61,7 @@ def wpaEncrypt(encKey, origPkt, decodedPkt, PN, genFCS = True):
 
     ## Increment the PN positively per IEEE spec
     PN[5] += 1
-    
+
     ## Grab the payload of the decoded packet
     dEverything = decodedPkt[LLC]
 
@@ -77,11 +78,16 @@ def wpaEncrypt(encKey, origPkt, decodedPkt, PN, genFCS = True):
     encodedPkt = ccmpCrypto.encryptCCMP(newPkt, encKey, PN, genFCS)
 
     ## Flip FCField bits accordingly
-    if encodedPkt[Dot11].FCfield == 1L:
-        encodedPkt[Dot11].FCfield = 65L
-    elif encodedPkt[Dot11].FCfield == 2L:
-        encodedPkt[Dot11].FCfield = 66L
-    
+    ### DEBUG
+    # if encodedPkt[Dot11].FCfield == 1L:
+    #     encodedPkt[Dot11].FCfield = 65L
+    # elif encodedPkt[Dot11].FCfield == 2L:
+    #     encodedPkt[Dot11].FCfield = 66L
+    if encodedPkt[Dot11].FCfield == 1:
+        encodedPkt[Dot11].FCfield = 65
+    elif encodedPkt[Dot11].FCfield == 2:
+        encodedPkt[Dot11].FCfield = 66
+
     return encodedPkt
 
 ### Instantiations

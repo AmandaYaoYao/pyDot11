@@ -1,12 +1,12 @@
 from Cryptodome.Cipher import AES
-from ccmp import Ccmp
-from tkip import Tkip
-from nic import Tap
+# from lib.ccmp import Ccmp
+# from lib.tkip import Tkip
+# from lib.nic import Tap
 from pbkdf2 import PBKDF2
 from scapy.layers.dot11 import Dot11
 from scapy.packet import Raw
 from scapy.utils import hexstr, PcapWriter, wrpcap
-import binascii, hashlib, hmac, logging, os, re, sha, sys
+import binascii, hashlib, hmac, logging, os, re, sys
 import sqlite3 as lite
 import packetEssentials as PE
 
@@ -46,7 +46,7 @@ class Handshake(object):
 
     def eapolGrab(self, pkt):
         """Insert an EAPOL pkt into the DB for retrieval later
-        
+
         A bug was found at BSides Charleston, thus the try statement.
         As no logs exist on this level, we are now hunting this bug.
         If you receive the warning, please pass along to ICSec.  Thanks!
@@ -62,9 +62,9 @@ class Handshake(object):
         ##IndexError: Layer [Raw] not found
         except:
             wrpcap('IndexError.pcap', pkt)
-            print '\n***** Unknown encryption type              *****'
-            print '***** Contact ICSec on github for assistance *****'
-            print '***** Bad frame saved to IndexError.pcap     *****'
+            print ('\n***** Unknown encryption type              *****')
+            print ('***** Contact ICSec on github for assistance *****')
+            print ('***** Bad frame saved to IndexError.pcap     *****')
             return
 
         ### Lazy workaround for eNum == None
@@ -72,15 +72,15 @@ class Handshake(object):
             if eNum[1] == '1' or eNum[1] == '2' or eNum[1] == '3':
                 nonce = hexstr(str(pkt.load), onlyhex = 1)[39:134]
                 hexPkt = hexstr(str(pkt), onlyhex = 1)
-                
+
                 ### Discard EAPOL 4 of 4
                 if nonce != '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00':
                     vMAC = ''
-                    
+
                     ## Store EAPOLs if requested
                     if self.pcap is True:
                         self.eapolTrack.write(pkt)
-                    
+
                     ## FROM-DS
                     if eNum == 'a1' or eNum == 'a3' or eNum == 't1' or eNum == 't3':
                         vMAC = pkt[Dot11].addr1
@@ -98,16 +98,16 @@ class Handshake(object):
                             encType = 'tkip'
                         else:
                             wrpcap('encType.pcap', pkt)
-                            print '\n***** Unknown encryption type                *****'
-                            print '***** Contact ICSec on github for assistance *****'
-                            print '***** Bad frame saved to encType.pcap        *****'
+                            print ('\n***** Unknown encryption type                *****')
+                            print ('***** Contact ICSec on github for assistance *****')
+                            print ('***** Bad frame saved to encType.pcap        *****')
                             return
                         self.encDict.update({vMAC: encType})
                         self.eapolStore(hexPkt, vMAC, bMAC, nonce, eNum)
 
                     ## DEBUG
-                    #print 'stored %s -- %s' % (eNum, nonce)
-                
+                    # print ('stored {0} -- {1}'.format(str(eNum), str(nonce)))
+
                     ## Begin catchDict checks
                     ## Need to deal with clearing out existing entries
                     ## Currently, this isn't done, so we might have good anonce, but bad snonce
@@ -126,14 +126,14 @@ class Handshake(object):
                             anonce = True
                             snonce = False
                         self.catchDict.update({vMAC: (anonce, snonce)})
-                        print 'EAPOL STARTED: %s' % vMAC
+                        print ('EAPOL STARTED: {0}'.format(str(vMac)))
 
                     ## Deal with vMAC in catchDict
                     else:
-                        
+
                         ## Grab current anonce/snonce status
                         storedAnonce, storedSnonce = self.catchDict.get(vMAC)
-                        
+
                         ## Decide how to update
                         if eNum[1] == '1':
                             anonce = True
@@ -146,27 +146,27 @@ class Handshake(object):
                         elif eNum[1] == '3':
                             anonce = True
                             snonce = False
-                            
+
                         ## Deal with anonce
                         if anonce:
                             self.catchDict.update({vMAC: (True, storedSnonce)})
                         if snonce:
                             self.catchDict.update({vMAC: (storedAnonce, True)})
-                            
+
                     ## DEBUG
-                    #print 'Our catchDict:\n%s\n' % self.catchDict
-                    
+                    # print ('Our catchDict:\n{0}\n'.format(str(self.catchDict)))
+
                     ## Check for anonce and snonce for the given vMAC
                     if self.catchDict.get(vMAC)[0] is True and self.catchDict.get(vMAC)[1] is True:
-                        
+
                         ## Grab anonce, vbin, bbin and bssid
                         q = self.db.execute('SELECT `vmac`, `bmac`, `nonce` FROM `shakes` WHERE vMAC = "{0}" AND `e_num` LIKE "%1" or `e_num` LIKE "%3" LIMIT 1;'.format(vMAC))
                         r = q.fetchone()
-                        
+
                         ## Grab snonce
                         q2 = self.db.execute('SELECT `nonce` FROM `shakes` WHERE vMAC = "{0}" AND `e_num` LIKE "%2";'.format(vMAC))
                         r2 = q.fetchone()
-                        
+
                         ## Gather tgt specific data
                         authMac = binascii.a2b_hex(r[0].replace(':', ''))
                         supMac = binascii.a2b_hex(r[1].replace(':', ''))
@@ -177,7 +177,7 @@ class Handshake(object):
                         ### Pull the encryption type and generate PTK
                         encType = self.encDict.get(vMAC)
                         ptk = self.xPRF512(self.pmk, self.pke, key_data)[32:48]
-                        
+
                         ### Once RC4 is dealt with, change back to simple dict
                         ## CCMP cipher generation
                         if encType == 'ccmp':
@@ -189,17 +189,17 @@ class Handshake(object):
                         ### Must regen new just like with WEP so that it doesn't cycle through
                         else:
                             self.tgtInfo.update({vMAC: (ptk, None)})
-                        
+
                         ## Add vMAC to list of available targets
                         self.availTgts.add(vMAC)
-                        
+
                         ## Let user know success
                         if vMAC not in self.alert:
-                            print 'EAPOL COMPLETE: %s\n' % vMAC
+                            print ('EAPOL COMPLETE: %s\n'.format(str(vMac)))
                             self.alert.add(vMAC)
         except:
-            print 'eNum for EAPOL is NULL\n'
-                    
+            print ('eNum for EAPOL is NULL\n')
+
 
     def eapolStore(self, hexPkt, vMAC, bMAC, nonce, eNum):
         """Store the EAPOL info to the DB"""
