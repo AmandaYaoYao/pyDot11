@@ -96,6 +96,16 @@ class Ccmp(object):
         We could use the function self.hasFCS(pkt)
         If it returned false, then we could simply do:
         pload = str(origPkt[Dot11WEP])
+
+        https://github.com/ICSec/pyDot11/issues/28
+        The code of ccmp decoder
+
+        PN[2] = pload[4]
+        PN[3] = pload[5]
+        should be
+
+        PN[2] = pload[5]
+        PN[3] = pload[4]
         """
 
         ## Remove the FCS so that we maintain packet size
@@ -231,11 +241,6 @@ class Ccmp(object):
         decodedPkt = postPkt/LLC(str(stream))
 
         ## Flip FCField bits accordingly
-        ### DEBUG
-        # if decodedPkt[Dot11].FCfield == 65L:
-        #     decodedPkt[Dot11].FCfield = 1L
-        # elif decodedPkt[Dot11].FCfield == 66L:
-        #     decodedPkt[Dot11].FCfield = 2L
         if decodedPkt[Dot11].FCfield == 65:
             decodedPkt[Dot11].FCfield = 1
         elif decodedPkt[Dot11].FCfield == 66:

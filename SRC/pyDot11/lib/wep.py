@@ -16,6 +16,12 @@ class Wep(object):
 
     def seedGen(self, iv, keyText):
         """Currently works with 40-bit and 104-bit"""
+        ### BEGIN HERE
+        # [b"\x15'\x00"] <<< iv -- This is str() in Python2x
+        # <class 'bytes'>
+        # b"\x15'\x00"
+        # 1234567890  <<< keyText str()
+
         keyLen = len(keyText)
 
         ## 40-bit
@@ -54,11 +60,6 @@ class Wep(object):
         decodedPkt = postPkt/LLC(str(stream))
 
         ## Flip FCField bits accordingly
-        ### DEBUG
-        # if decodedPkt[Dot11].FCfield == 65L:
-        #     decodedPkt[Dot11].FCfield = 1L
-        # elif decodedPkt[Dot11].FCfield == 66L:
-        #     decodedPkt[Dot11].FCfield = 2L
         if decodedPkt[Dot11].FCfield == 65:
             decodedPkt[Dot11].FCfield = 1
         elif decodedPkt[Dot11].FCfield == 66:
@@ -74,7 +75,15 @@ class Wep(object):
     def decoder(self, pkt, keyText):
         """Take a packet with [Dot11WEP] and apply RC4 to get the [LLC]"""
         ## Re-use the IV for comparative purposes
+        # <class 'bytes'>
+        # b'z\x00\x00\x124Vx\x90'
+        # print('DECODING')
+        # print([pkt[Dot11WEP].iv])
+        # print(str([pkt[Dot11WEP].iv]))
+        # print(type(pkt[Dot11WEP].iv))
         iVal = pkt[Dot11WEP].iv
+        # print(iVal)
+        # print(keyText)
         seed = self.seedGen(iVal, keyText)
 
         ## Remove the FCS so that we maintain packet size
@@ -85,6 +94,13 @@ class Wep(object):
                                 output = 'str')
 
         ## Return the stream, iv and seed
+        # print('\n\n\n')
+        # print(type(pload))
+        # print('\n')
+        # print(pload)
+        # print('\n\n\n')
+        # print(type(seed))
+        # print(seed)
         return rc4(Dot11WEP(pload).wepdata, seed), iVal, seed
 
 
@@ -108,11 +124,6 @@ class Wep(object):
         encodedPacket = pkt/Dot11WEP(iv = iVal, keyid = 0, wepdata = stream)
 
         ## Flip FCField bits accordingly
-        ### DEBUG
-        # if encodedPacket[Dot11].FCfield == 1L:
-        #     encodedPacket[Dot11].FCfield = 65L
-        # elif encodedPacket[Dot11].FCfield == 2L:
-        #     encodedPacket[Dot11].FCfield = 66L
         if encodedPacket[Dot11].FCfield == 1:
             encodedPacket[Dot11].FCfield = 65
         elif encodedPacket[Dot11].FCfield == 2:
