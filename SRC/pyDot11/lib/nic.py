@@ -11,4 +11,4 @@ class Tap(object):
     def create(self):
         """Create the tap interface"""
         self.nic = os.open('/dev/net/tun', os.O_RDWR)
-        fcntl.ioctl(self.nic, 0x400454ca, struct.pack("16sH", self.tapName, 2))
+        fcntl.ioctl(self.nic, 0x400454ca, struct.pack("16sH".encode(), self.tapName.encode(), 2))

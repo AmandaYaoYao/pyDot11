@@ -7,6 +7,7 @@ from scapy.layers.eap import Ether, EAPOL
 from scapy.sendrecv import sendp, sniff
 from scapy.utils import PcapReader, PcapWriter
 from pyDot11 import *
+#import pysnooper
 
 """
 To-Do:
@@ -68,28 +69,28 @@ class Handler(object):
             verbose = 0)
             #else:
                 #self.pw.write(decodedPkt)
-        
+
 
 def pktFilter(packet):
     """ Verify it is an encrypted data packet"""
     if packet[Dot11].type == 2 and\
        packet.haslayer(Dot11WEP) and\
-       (packet[Dot11].FCfield == 65l or packet[Dot11].FCfield == 66L):
+       (packet[Dot11].FCfield == 65 or packet[Dot11].FCfield == 66):
         return True
     else:
         return False
 
-
+#@pysnooper.snoop('blah')
 def wepParser(pHandler, args):
     def engine(packet):
 
         ## Verify we care
         if pktFilter(packet):
-            
+
             ## Both ways From-DS
             if args.d == 'both' and packet[Dot11].addr2 == args.b.lower():
                 pHandler.fromDecrypt(packet, args)
-                
+
             ## Both ways To-DS
             elif args.d == 'both' and packet[Dot11].addr1 == args.b.lower():
                 pHandler.toDecrypt(packet, args)
@@ -111,14 +112,14 @@ def wpaParser(pHandler, args, shake, ccmp, tkip):
         try:
             if packet.haslayer(EAPOL):
                 shake.eapolGrab(packet)
-                
+
             ## Verify we care
             elif pktFilter(packet):
                 tgtMAC = False
-                
+
                 ## DEBUG
                 #print shake.availTgts
-                
+
                 ## MAC verification
                 if packet.addr1 in shake.availTgts:
                     tgtMAC = packet.addr1
@@ -130,7 +131,7 @@ def wpaParser(pHandler, args, shake, ccmp, tkip):
                     ## Both ways From-DS
                     if args.d == 'both' and packet[Dot11].addr2 == args.b.lower():
                         pHandler.fromDecrypt(packet, args, shake, ccmp, tkip, tgtMAC)
-                        
+
                     ## Both ways To-DS
                     elif args.d == 'both' and packet[Dot11].addr1 == args.b.lower():
                         pHandler.toDecrypt(packet, args, shake, ccmp, tkip, tgtMAC)
@@ -168,7 +169,7 @@ def main(args):
         packetParser = wepParser(pHandler, args)
     if args.t == 'wpa':
         if not args.e:
-            print 'wpa requires -e'
+            print ('wpa requires -e')
             sys.exit(1)
         ccmp = Ccmp()
         tkip = Tkip()
@@ -180,41 +181,44 @@ def main(args):
         if not args.d:
             args.d = 'to'
         if args.t == 'wpa':
-            LFilter = lambda x: x[Dot11].FCfield == 65L or x.haslayer(EAPOL)
+            LFilter = lambda x: x[Dot11].FCfield == 65 or x.haslayer(EAPOL)
         else:
-            LFilter = lambda x: x[Dot11].FCfield == 65L
+            LFilter = lambda x: x[Dot11].FCfield == 65
 
     ## Deal with 2-way
     elif args.d == 'both':
         if args.t == 'wpa':
-            LFilter = lambda x: x[Dot11].FCfield == 65L or x[Dot11].FCfield == 66L or x.haslayer(EAPOL)
+            LFilter = lambda x: x[Dot11].FCfield == 65 or x[Dot11].FCfield == 66 or x.haslayer(EAPOL)
         else:
-            LFilter = lambda x: x[Dot11].FCfield == 65L or x[Dot11].FCfield == 66L
+            LFilter = lambda x: x[Dot11].FCfield == 65 or x[Dot11].FCfield == 66
 
     ## Deal with From-DS
     elif args.d == 'from':
         if args.t == 'wpa':
-            LFilter = lambda x: x[Dot11].FCfield == 66L or x.haslayer(EAPOL)
+            LFilter = lambda x: x[Dot11].FCfield == 66 or x.haslayer(EAPOL)
         else:
-            LFilter = lambda x: x[Dot11].FCfield == 66L
+            LFilter = lambda x: x[Dot11].FCfield == 66
 
     ## Sniff or Read
     if args.i:
-        print 'pyDot11 up and running on tap{0}'.format(args.n)
+        print ('pyDot11 up and running on tap{0}'.format(args.n))
         sniff(iface = args.i,
               prn = packetParser,
               lfilter = LFilter,
               store = 0)
     elif args.f:
-        print 'pyDot11 up and running on tap{0}'.format(args.n)
-        raw_input('Press Enter to Iterate through {0}'.format(args.f))
+        print ('pyDot11 up and running on tap{0}'.format(args.n))
+        try:
+            raw_input('Press Enter to Iterate through {0}'.format(args.f))
+        except:
+            input('Press Enter to Iterate through {0}'.format(args.f))
         sTime = time.time()
         if os.access(args.f, os.R_OK):
             pCapture = PcapReader(args.f)
             for pkt in pCapture:
                 packetParser(pkt)
             #pHandler.pw.close()
-            print '\nCompleted in %s seconds!\n' % str(time.time() - sTime)
+            print ('\nCompleted in %s seconds!\n' % str(time.time() - sTime))
         else:
             sys.stderr.write("{}: Cannot open input file: {}; skipping\n".format(sys.argv[0], pcap_file))
 
@@ -228,7 +232,7 @@ if __name__ == '__main__':
     input_args.add_argument('-f',
                             metavar = '<Input PCAP>',
                             help = 'PCAP from which to get frames')
-    
+
     parser.add_argument('-b',
                         metavar = '<tgt BSSID>',
                         required = True,

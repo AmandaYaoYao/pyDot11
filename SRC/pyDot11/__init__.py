@@ -14,8 +14,10 @@ from .lib import utils
 from .lib.wep import Wep
 import binascii
 import packetEssentials as PE
+#import pysnooper
 
 ## WEP PORTION
+# @pysnooper.snoop('./snoop.log')
 def wepDecrypt(pkt, keyText, genFCS = True):
     """Encompasses the steps needed to decrypt a WEP packet
     By default will generate a packet with an FCS
@@ -78,11 +80,6 @@ def wpaEncrypt(encKey, origPkt, decodedPkt, PN, genFCS = True):
     encodedPkt = ccmpCrypto.encryptCCMP(newPkt, encKey, PN, genFCS)
 
     ## Flip FCField bits accordingly
-    ### DEBUG
-    # if encodedPkt[Dot11].FCfield == 1L:
-    #     encodedPkt[Dot11].FCfield = 65L
-    # elif encodedPkt[Dot11].FCfield == 2L:
-    #     encodedPkt[Dot11].FCfield = 66L
     if encodedPkt[Dot11].FCfield == 1:
         encodedPkt[Dot11].FCfield = 65
     elif encodedPkt[Dot11].FCfield == 2:

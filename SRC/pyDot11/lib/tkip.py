@@ -323,11 +323,6 @@ class Tkip(object):
         finalPkt = postPkt.copy()/LLC(binascii.unhexlify(dEverything.replace(' ', '')))
 
         ## Flip FCField bits accordingly
-        ### DEBUG
-        # if finalPkt[Dot11].FCfield == 65L:
-        #     finalPkt[Dot11].FCfield = 1L
-        # elif finalPkt[Dot11].FCfield == 66L:
-        #     finalPkt[Dot11].FCfield = 2L
         if finalPkt[Dot11].FCfield == 65:
             finalPkt[Dot11].FCfield = 1
         elif finalPkt[Dot11].FCfield == 66:
