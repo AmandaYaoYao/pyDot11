@@ -22,18 +22,18 @@ scapy 2.4.0
 
 In the RESOURCEs folder you will find the python modules which have been tested.  As newer versions of the modules come out, sufficient testing must be done before they can be made known as "stable" with pyDot11.  Feel free to use pip or whatever method you would like to get these installed.  If you wish to use the modules locally provided with this git, then an installation would be something like so:
 ````bash
-pip install RESOURCEs/packetEssentials-1.4.4.tar.gz
+pip install RESOURCEs/packetEssentials-1.4.6.tar.gz
 pip install RESOURCEs/pbkdf2-1.3.tar.gz
 pip install RESOURCEs/pyDot11-2.1.0.tar.gz
 pip install RESOURCEs/pycryptodomex-3.4.5.tar.gz
 pip install RESOURCEs/rc4-0.2.tar.gz
-pip install RESOURCEs/scapy-2.4.0.tar.gz
+pip install RESOURCEs/scapy-2.4.3rc4.dev1.tar.gz
 
 ## If you run into issues with the scapy module not being found
 ## Try this local folder workaround
-tar zxf RESOURCEs/scapy-2.4.3rc1.dev128.tar.gz
-mv scapy-2.4.0/scapy/ .
-rm -rf scapy-2.4.0/
+tar zxf RESOURCEs/scapy-2.4.3rc4.dev1.tar.gz
+mv scapy-2.4.3rc4/scapy/ .
+rm -rf scapy-2.4.3rc4/
 ````
 <br><br>
 
