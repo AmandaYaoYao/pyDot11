@@ -126,7 +126,7 @@ class Handshake(object):
                             anonce = True
                             snonce = False
                         self.catchDict.update({vMAC: (anonce, snonce)})
-                        print ('EAPOL STARTED: {0}'.format(str(vMac)))
+                        print ('EAPOL STARTED: {0}'.format(str(vMAC)))
 
                     ## Deal with vMAC in catchDict
                     else:
@@ -195,7 +195,7 @@ class Handshake(object):
 
                         ## Let user know success
                         if vMAC not in self.alert:
-                            print ('EAPOL COMPLETE: %s\n'.format(str(vMac)))
+                            print ('EAPOL COMPLETE: %s\n'.format(str(vMAC)))
                             self.alert.add(vMAC)
         except:
             print ('eNum for EAPOL is NULL\n')
